@@ -15,6 +15,8 @@ type Config struct {
 	DB         string
 }
 
+var Connection *gorm.DB
+
 var GetConnectionString = func(config Config) string {
 	connectionString := fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=true&multiStatements=true",
@@ -23,9 +25,7 @@ var GetConnectionString = func(config Config) string {
 	return connectionString
 }
 
-var DB *gorm.DB
-
-func Connect() error {
+func Connect() {
 
 	config := Config{
 		ServerName: "localhost:3306",
@@ -36,14 +36,13 @@ func Connect() error {
 
 	connectionString := GetConnectionString(config)
 
-	_, err := gorm.Open(mysql.Open(connectionString), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(connectionString), &gorm.Config{})
 
 	if err != nil {
 		panic(err.Error())
+	} else {
+		log.Println("Connected to MySQL database")
+		Connection = db
 	}
-
-	log.Println("Connected to MySQL database")
-
-	return nil
 
 }

@@ -11,9 +11,14 @@ import (
 	_ "gorm.io/driver/mysql"
 )
 
-func main() {
+func init() {
+	database.Connect()
 
-	setupDatabase()
+	database.Connection.AutoMigrate(&models.Movie{})
+	log.Println("Successfully Migrated database.")
+}
+
+func main() {
 
 	log.Println("Starting the HTTP server on port 8080")
 	router := mux.NewRouter().StrictSlash(true)
@@ -26,9 +31,4 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 
-}
-
-func setupDatabase() {
-	database.DB.AutoMigrate(&models.Movie{})
-	log.Println("Successfully Migrated database.")
 }
