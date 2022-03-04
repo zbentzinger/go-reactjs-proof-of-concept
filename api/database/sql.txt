@@ -1,0 +1,13 @@
+CREATE DATABASE IF NOT EXISTS movies;
+
+USE movies;
+
+DROP TABLE IF EXISTS movies;
+
+CREATE TABLE movies (
+	`id` 			INT(11) NOT NULL AUTO_INCREMENT,
+	`name` 			VARCHAR(255) DEFAULT "",
+	`description` 	VARCHAR(255) DEFAULT "",
+	`release_date`	VARCHAR(255) DEFAULT "",
+	PRIMARY KEY(`id`)
+);
