@@ -13,6 +13,16 @@ import (
 
 func ListMovies(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.UserAgent(), r.Method, r.RequestURI, r.Body)
+
+	var movies []models.Movie
+
+	database.Connection.Find(&movies)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(movies)
+
 }
 
 func GetMovie(w http.ResponseWriter, r *http.Request) {
@@ -23,12 +33,16 @@ func GetMovie(w http.ResponseWriter, r *http.Request) {
 	id := params["id"]
 	var movie models.Movie
 
-	database.Connection.First(&movie, id)
+	result := database.Connection.First(&movie, id)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	if result.Error == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(movie)
+		json.NewEncoder(w).Encode(movie)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
 
 }
 
