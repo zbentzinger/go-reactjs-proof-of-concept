@@ -5,14 +5,12 @@ import (
 	"api/api/models"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
 func ListMovies(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.UserAgent(), r.Method, r.RequestURI, r.Body)
 
 	var movies []models.Movie
 
@@ -26,8 +24,6 @@ func ListMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMovie(w http.ResponseWriter, r *http.Request) {
-
-	log.Println(r.UserAgent(), r.Method, r.RequestURI, r.Body)
 
 	params := mux.Vars(r)
 	id := params["id"]
@@ -46,9 +42,25 @@ func GetMovie(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func CreateMovie(w http.ResponseWriter, r *http.Request) {
+func GetRandomMovie(w http.ResponseWriter, r *http.Request) {
+	var movie models.Movie
 
-	log.Println(r.UserAgent(), r.Method, r.RequestURI, r.Body)
+	//result := database.Connection.First(&movie, id)
+
+	result := database.Connection.Raw("SELECT * FROM movies ORDER BY RAND() LIMIT 1").Scan(&movie) // GORM has no Rand() function.
+
+	if result.Error == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		json.NewEncoder(w).Encode(movie)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+}
+
+func CreateMovie(w http.ResponseWriter, r *http.Request) {
 
 	requestBody, _ := ioutil.ReadAll(r.Body)
 	var movie models.Movie
@@ -62,7 +74,6 @@ func CreateMovie(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateMovie(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.UserAgent(), r.Method, r.RequestURI, r.Body)
 
 	var movie models.Movie
 
@@ -79,7 +90,6 @@ func UpdateMovie(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteMovie(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.UserAgent(), r.Method, r.RequestURI, r.Body)
 
 	var movie models.Movie
 
