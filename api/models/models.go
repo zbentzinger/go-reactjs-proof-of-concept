@@ -8,3 +8,7 @@ type Movie struct {
 	Description string `json:"description"`
 	ReleaseDate string `json:"releaseDate"`
 }
+
+type Healthcheck struct {
+	Status string `json:"status"`
+}

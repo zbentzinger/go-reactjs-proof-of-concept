@@ -24,6 +24,8 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(loggingMiddleware)
 
+	router.HandleFunc("/v1/healthcheck/", controllers.Healthcheck).Methods("GET")
+
 	router.HandleFunc("/v1/movies/", controllers.ListMovies).Methods("GET")
 	router.HandleFunc("/v1/movies/", controllers.CreateMovie).Methods("POST")
 	router.HandleFunc("/v1/movies/random/", controllers.GetRandomMovie).Methods("GET")
