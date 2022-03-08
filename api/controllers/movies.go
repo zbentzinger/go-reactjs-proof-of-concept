@@ -10,9 +10,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func ListMovies(w http.ResponseWriter, r *http.Request) {
+var movie models.Movie
+var movies []models.Movie
 
-	var movies []models.Movie
+func ListMovies(w http.ResponseWriter, r *http.Request) {
 
 	database.Connection.Find(&movies)
 
@@ -27,7 +28,6 @@ func GetMovie(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 	id := params["id"]
-	var movie models.Movie
 
 	result := database.Connection.First(&movie, id)
 
@@ -43,9 +43,6 @@ func GetMovie(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetRandomMovie(w http.ResponseWriter, r *http.Request) {
-	var movie models.Movie
-
-	//result := database.Connection.First(&movie, id)
 
 	result := database.Connection.Raw("SELECT * FROM movies ORDER BY RAND() LIMIT 1").Scan(&movie) // GORM has no Rand() function.
 
@@ -63,7 +60,6 @@ func GetRandomMovie(w http.ResponseWriter, r *http.Request) {
 func CreateMovie(w http.ResponseWriter, r *http.Request) {
 
 	requestBody, _ := ioutil.ReadAll(r.Body)
-	var movie models.Movie
 
 	json.Unmarshal(requestBody, &movie)
 	database.Connection.Create(&movie)
@@ -74,8 +70,6 @@ func CreateMovie(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateMovie(w http.ResponseWriter, r *http.Request) {
-
-	var movie models.Movie
 
 	requestBody, _ := ioutil.ReadAll(r.Body)
 	requestParams := mux.Vars(r)
@@ -90,8 +84,6 @@ func UpdateMovie(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteMovie(w http.ResponseWriter, r *http.Request) {
-
-	var movie models.Movie
 
 	requestBody, _ := ioutil.ReadAll(r.Body)
 	requestParams := mux.Vars(r)
