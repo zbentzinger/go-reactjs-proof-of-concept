@@ -4,8 +4,11 @@ import (
 	"api/api/controllers"
 	"api/api/database"
 	"api/api/models"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	_ "gorm.io/driver/mysql"
@@ -16,6 +19,7 @@ func init() {
 
 	database.Connection.AutoMigrate(&models.Movie{})
 	database.Connection.AutoMigrate(&models.User{})
+
 	log.Println("Successfully Migrated database.")
 }
 
@@ -24,19 +28,23 @@ func main() {
 	log.Println("Starting the HTTP server on port 8080")
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.Use(loggingMiddleware)
 
-	router.HandleFunc("/api/v1/healthcheck/", controllers.Healthcheck).Methods("GET")
+	basePathRouter := router.PathPrefix("/api/v1").Subrouter()
+	basePathRouter.Use(loggingMiddleware)
+	basePathRouter.HandleFunc("/healthcheck/", controllers.Healthcheck).Methods("GET")
 
-	// router.HandleFunc("/api/v1/auth/signup/", controllers.Signup).Methods("POST")
-	// router.HandleFunc("/api/v1/auth/login/", controllers.Login).Methods("POST")
+	authRouter := basePathRouter.PathPrefix("/auth").Subrouter()
+	authRouter.HandleFunc("/signup/", controllers.Signup).Methods("POST")
+	authRouter.HandleFunc("/login/", controllers.Login).Methods("POST")
 
-	router.HandleFunc("/api/v1/movies/", controllers.ListMovies).Methods("GET")
-	router.HandleFunc("/api/v1/movies/", controllers.CreateMovie).Methods("POST")
-	router.HandleFunc("/api/v1/movies/{id}/", controllers.GetMovie).Methods("GET")
-	router.HandleFunc("/api/v1/movies/{id}/", controllers.UpdateMovie).Methods("PUT")
-	router.HandleFunc("/api/v1/movies/{id}/", controllers.DeleteMovie).Methods("Delete")
-	router.HandleFunc("/api/v1/movies/random/", controllers.GetRandomMovie).Methods("GET")
+	moviesRouter := basePathRouter.PathPrefix("/movies").Subrouter()
+	moviesRouter.Use(authMiddleware)
+	moviesRouter.HandleFunc("/", controllers.ListMovies).Methods("GET")
+	moviesRouter.HandleFunc("/", controllers.CreateMovie).Methods("POST")
+	moviesRouter.HandleFunc("/random/", controllers.GetRandomMovie).Methods("GET")
+	moviesRouter.HandleFunc("/{id}/", controllers.GetMovie).Methods("GET")
+	moviesRouter.HandleFunc("/{id}/", controllers.UpdateMovie).Methods("PUT")
+	moviesRouter.HandleFunc("/{id}/", controllers.DeleteMovie).Methods("Delete")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 
@@ -47,5 +55,46 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		log.Println(r.UserAgent(), r.Method, r.RequestURI, r.Body)
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		tokenString := r.Header.Get("Authorization")
+
+		if len(tokenString) == 0 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+
+			json.NewEncoder(w).Encode(
+				models.GenericMessage{
+					Message: "Missing Authorization Header",
+				},
+			)
+
+			return
+		}
+
+		tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
+		claims, err := controllers.VerifyToken(tokenString)
+
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+
+			json.NewEncoder(w).Encode(
+				models.GenericMessage{
+					Message: "Error verifying JWT token: " + err.Error(),
+				},
+			)
+
+			return
+		}
+
+		fmt.Println(claims)
+
+		next.ServeHTTP(w, r)
+
 	})
 }
