@@ -4,6 +4,7 @@ import (
 	"api/api/database"
 	"api/api/models"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -57,12 +58,21 @@ func VerifyToken(tokenString string) (jwt.Claims, error) {
 
 	signingKey := []byte("FooBar")
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return signingKey, nil
-	})
+	token, err := jwt.Parse(
+		tokenString,
+		func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+
+			return signingKey, nil
+		},
+	)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return token.Claims, err
 
 }

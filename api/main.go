@@ -5,7 +5,6 @@ import (
 	"api/api/database"
 	"api/api/models"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -77,7 +76,7 @@ func authMiddleware(next http.Handler) http.Handler {
 		}
 
 		tokenString = strings.Replace(tokenString, "Bearer ", "", 1)
-		claims, err := controllers.VerifyToken(tokenString)
+		_, err := controllers.VerifyToken(tokenString)
 
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
@@ -91,8 +90,6 @@ func authMiddleware(next http.Handler) http.Handler {
 
 			return
 		}
-
-		fmt.Println(claims)
 
 		next.ServeHTTP(w, r)
 
