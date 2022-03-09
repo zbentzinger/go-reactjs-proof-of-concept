@@ -10,11 +10,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	_ "gorm.io/driver/mysql"
 )
 
 func init() {
-	database.Connect()
+	database.Connect("sqlite")
 
 	database.Connection.AutoMigrate(&models.Movie{})
 	database.Connection.AutoMigrate(&models.User{})
